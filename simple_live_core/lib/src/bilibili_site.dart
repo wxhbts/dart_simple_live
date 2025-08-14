@@ -46,12 +46,12 @@ class BiliBiliSite implements LiveSite {
         ? {
             "user-agent": kDefaultUserAgent,
             "referer": kDefaultReferer,
-            "cookie": 'buvid3=$buvid3;buvid4=$buvid4;',
+            "cookie": 'buvid3=$buvid3;buvid4=$buvid4;DedeUserID=1;',
           }
         : {
             "cookie": cookie.contains("buvid3")
                 ? cookie
-                : "$cookie;buvid3=$buvid3;buvid4=$buvid4;",
+                : "$cookie;buvid3=$buvid3;buvid4=$buvid4;DedeUserID=1;",
             "user-agent": kDefaultUserAgent,
             "referer": kDefaultReferer,
           };
