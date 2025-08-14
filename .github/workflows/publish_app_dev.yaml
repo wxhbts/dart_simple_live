@@ -7,9 +7,9 @@ on:
       - 'dev'
 
 jobs:
-  # 打包Android、iOS、Mac
-  build-mac-ios-android:
-    runs-on: macos-latest
+  # 打包iOS、Mac、Linux、Windows
+  build-all:
+    runs-on: macos-latest  # macOS 用于构建 iOS 和 macOS
 
     permissions:
       contents: write
@@ -20,7 +20,6 @@ jobs:
         with:
           ref: dev
 
-     
       # 设置JAVA环境
       - uses: actions/setup-java@v4
         with:
@@ -33,7 +32,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.x'
-          cache: true 
+          cache: true
 
       # 打开MAC Desktop支持
       - name: Enable Flutter Desktop
@@ -53,7 +52,6 @@ jobs:
       - name: Install flutter_distributor
         run: dart pub global activate flutter_distributor
 
-    
       #打包iOS
       - name: Build IPA
         run: |
@@ -83,7 +81,7 @@ jobs:
         run: |
           cd simple_live_app
           flutter_distributor package --platform macos --targets dmg,zip --skip-clean
-      
+
       # 上传MAC至Artifacts
       - name: Upload MacOS to Artifacts
         uses: actions/upload-artifact@v4
@@ -92,7 +90,8 @@ jobs:
           path: |
             simple_live_app/build/dist/*/*.dmg
             simple_live_app/build/dist/*/*.zip
-      #完成
+
+      # 完成
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
   # 打包Linux
@@ -141,7 +140,7 @@ jobs:
             simple_live_app/build/dist/*/*.deb
             simple_live_app/build/dist/*/*.zip
 
-        #完成
+        # 完成
       - run: echo "🍏 Linux job's status is ${{ job.status }}."
 
   # 打包Windows
@@ -182,5 +181,5 @@ jobs:
           path: |
             simple_live_app/build/dist/*/*.msix
             simple_live_app/build/dist/*/*.zip
-        #完成
+        # 完成
       - run: echo "🍏 Windows job's status is ${{ job.status }}."
