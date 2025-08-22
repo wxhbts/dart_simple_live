@@ -32,8 +32,8 @@ jobs:
       - name: Create key.properties
         run: |
           echo "storeFile=simple_live_app/android/app/keystore.jks" > simple_live_app/android/key.properties
-          echo "storePassword=${{ secrets.STORE_PASSWORD }}" >> simple_live_app/android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> simple_live_app/android/key.properties
+          echo "storePassword=lpzlpz >> simple_live_app/android/key.properties
+          echo "keyPassword=lpzlpz >> simple_live_app/android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> simple_live_app/android/key.properties
 
 
