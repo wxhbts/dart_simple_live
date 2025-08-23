@@ -7,8 +7,8 @@ on:
       - 'dev'
 
 jobs:
-  # 打包Android、iOS、Mac
-  build-mac-ios-android:
+  # 打包 iOS、Mac
+  build-mac-ios:
     runs-on: macos-latest
 
     permissions:
@@ -20,24 +20,14 @@ jobs:
         with:
           ref: dev
 
-      # APK签名设置
-      - name: Download Android keystore
-        id: android_keystore
-        uses: timheuer/base64-to-file@v1.2
+      # ----------------------  添加 Xcode 版本选择 ----------------------
+      - name: Select Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
         with:
-          fileName: keystore.jks
-          encodedString: lpzlpz
-      - name: Copy keystore
-        run: cp keystore.jks simple_live_app/android/app/keystore.jks
-      - name: Create key.properties
-        run: |
-          echo "storeFile=simple_live_app/android/app/keystore.jks" > simple_live_app/android/key.properties
-          echo "storePassword=lpzlpz >> simple_live_app/android/key.properties
-          echo "keyPassword=lpzlpz >> simple_live_app/android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> simple_live_app/android/key.properties
+          xcode-version: '15.3.0' #  重要！  替换为你希望使用的 Xcode 版本
+      # ----------------------                        ----------------------
 
-
-      # 设置JAVA环境
+      # 设置JAVA环境 (可能不需要，但保留以防万一)
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
@@ -49,7 +39,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.x'
-          cache: true 
+          cache: true
 
       # 打开MAC Desktop支持
       - name: Enable Flutter Desktop
@@ -61,66 +51,28 @@ jobs:
           cd simple_live_app
           flutter pub get
 
-      # 安装appdmg npm install -g appdmg
+      # 安装 appdmg
       - name: Install appdmg
         run: npm install -g appdmg
 
-      # 设置flutter_distributor环境
+      # 设置 flutter_distributor 环境
       - name: Install flutter_distributor
         run: dart pub global activate flutter_distributor
 
-      # 打包APK
-      - name: Build APK
+      # --------------- 在 Build IPA 之前 运行 pod install--------------------
+      - name: Install CocoaPods dependencies
         run: |
-          cd simple_live_app
-          flutter build apk --release --split-per-abi
+          cd simple_live_app/ios
+          pod install
+      # ---------------  --------------------
 
-      #上传Artifacts
-      - name: Upload APK to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android
-          path: |
-            simple_live_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            simple_live_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
-
-      # TV APK签名设置
-      - name: Download Android TV keystore
-        id: android_tv_keystore
-        uses: timheuer/base64-to-file@v1.2
-        with:
-          fileName: keystore_tv.jks
-          encodedString: ${{ secrets.TV_KEYSTORE_BASE64 }}
-      - name: Create key.properties
-        run: |
-          echo "storeFile=${{ steps.android_tv_keystore.outputs.filePath }}" > simple_live_tv_app/android/key.properties
-          echo "storePassword=${{ secrets.TV_STORE_PASSWORD }}" >> simple_live_tv_app/android/key.properties
-          echo "keyPassword=${{ secrets.TV_KEY_PASSWORD }}" >> simple_live_tv_app/android/key.properties
-          echo "keyAlias=${{ secrets.TV_KEY_ALIAS }}" >> simple_live_tv_app/android/key.properties
-
-      #打包 Android TV APK
-      - name: Build TV APK
-        run: |
-          cd simple_live_tv_app
-          flutter build apk --release --split-per-abi
-      #上传TV APK至Artifacts
-      - name: Upload TV APK to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android_tv
-          path: |
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
-
-      #打包iOS
+      # 打包iOS
       - name: Build IPA
         run: |
           cd simple_live_app
           flutter build ios --release --no-codesign
 
-      #创建未签名ipa
+      # 创建未签名ipa
       - name: Create IPA
         run: |
           cd simple_live_app
@@ -143,7 +95,7 @@ jobs:
         run: |
           cd simple_live_app
           flutter_distributor package --platform macos --targets dmg,zip --skip-clean
-      
+
       # 上传MAC至Artifacts
       - name: Upload MacOS to Artifacts
         uses: actions/upload-artifact@v4
@@ -152,7 +104,7 @@ jobs:
           path: |
             simple_live_app/build/dist/*/*.dmg
             simple_live_app/build/dist/*/*.zip
-      #完成
+      # 完成
       - run: echo "🍏 This job's status is ${{ job.status }}."
 
   # 打包Linux
